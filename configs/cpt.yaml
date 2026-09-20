@@ -1,0 +1,23 @@
+# Stage 1: Thai continued pretraining on 1x H100 80GB
+output_dir: runs/cpt
+model_path: base/qwen3.5-0.8b-text
+data:
+  train_glob: data/cpt/shard-*.bin
+  eval_path: data/cpt/eval.bin
+seq_len: 4096
+micro_batch: 32         # 32 x 4096 = 131k tokens per micro step (~45 GB with grad ckpt); big kernels resist CPU starvation
+grad_accum: 8           # -> 1.05M tokens / optimizer step (unchanged)
+lr: 5.0e-5
+min_lr_ratio: 0.1
+weight_decay: 0.1
+betas: [0.9, 0.95]
+warmup_ratio: 0.01
+total_tokens: 5.0e9     # ~4770 steps
+grad_clip: 1.0
+bf16: true
+gradient_checkpointing: true
+compile: false
+save_every: 500
+eval_every: 250
+log_every: 10
+seed: 0

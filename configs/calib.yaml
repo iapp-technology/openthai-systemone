@@ -1,0 +1,31 @@
+# Stage 3: calibration (proper scoring rule + per-type temperature), backbone frozen
+output_dir: runs/calib
+model_path: runs/sft/latest
+data:
+  train_globs:
+    - data/decision/*.train.jsonl
+    - data/synth/synth-[2-9]-*.jsonl
+    - data/synth_sentiment/*.jsonl
+  weights:
+    __default__: 1.0
+    synth_sentiment_th: 3.0
+seq_len: 8192
+micro_batch: 16
+grad_accum: 4
+lr: 1.0e-3
+min_lr_ratio: 0.1
+weight_decay: 0.0
+warmup_ratio: 0.05
+max_steps: 400
+grad_clip: 1.0
+bf16: true
+gradient_checkpointing: false
+save_every: 200
+log_every: 10
+seed: 1
+extra:
+  freeze_backbone: true
+  abstain_rate: 0.03
+  label_smoothing: 0.0
+  brier_weight: 1.0
+  train_temperature: true

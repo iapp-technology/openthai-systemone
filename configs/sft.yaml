@@ -1,0 +1,38 @@
+# Stage 2: decision-head SFT
+output_dir: runs/sft
+model_path: runs/cpt/latest        # CPT'd causal LM; head is replaced by from_causal_lm()
+data:
+  train_globs:
+    - data/decision/*.train.jsonl
+    - data/synth/synth-[2-9]-*.jsonl   # gen_version >= 2 only (v1 has label-leaking descriptions)
+    - data/synth_sentiment/*.jsonl      # Thai social-media sentiment (wisesight-style weak spot fix)
+  weights:                         # multiplied by sqrt(source size); default 1.0
+    __default__: 1.0
+    synth_sentiment_th: 3.0
+    synth: 2.0
+    mind2web: 2.0
+    xlam_tools: 1.5
+    massive_th: 1.5
+    xnli_th: 1.2
+    mnli: 0.6
+    mmlu: 0.5
+seq_len: 8192
+micro_batch: 16
+grad_accum: 4                      # 64 records / step
+lr: 3.0e-5
+min_lr_ratio: 0.05
+weight_decay: 0.05
+warmup_ratio: 0.03
+epochs: 1.0
+max_steps: 12000                   # ~770k records; overrides epochs so the cosine schedule completes in ~12h
+grad_clip: 1.0
+bf16: true
+gradient_checkpointing: true
+save_every: 500
+log_every: 10
+seed: 0
+extra:
+  abstain_rate: 0.03
+  label_smoothing: 0.03
+  brier_weight: 0.0
+  train_temperature: false

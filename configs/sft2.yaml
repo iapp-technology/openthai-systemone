@@ -1,0 +1,38 @@
+# Stage 2b: short continuation SFT adding the Thai sentiment set (weak-spot fix), init from runs/sft/latest
+output_dir: runs/sft2
+model_path: runs/sft/latest
+data:
+  train_globs:
+    - data/decision/*.train.jsonl
+    - data/synth/synth-[2-9]-*.jsonl
+    - data/synth_sentiment/*.jsonl
+  weights:
+    __default__: 1.0
+    synth_sentiment_th: 4.0
+    synth: 2.0
+    mind2web: 2.0
+    xlam_tools: 1.5
+    massive_th: 1.5
+    xnli_th: 1.2
+    mnli: 0.6
+    mmlu: 0.5
+seq_len: 8192
+micro_batch: 16
+grad_accum: 4
+lr: 1.5e-5
+min_lr_ratio: 0.05
+weight_decay: 0.05
+warmup_ratio: 0.05
+epochs: 1.0
+max_steps: 3000
+grad_clip: 1.0
+bf16: true
+gradient_checkpointing: true
+save_every: 500
+log_every: 10
+seed: 2
+extra:
+  abstain_rate: 0.03
+  label_smoothing: 0.03
+  brier_weight: 0.0
+  train_temperature: false

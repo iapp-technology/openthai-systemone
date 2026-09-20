@@ -1,0 +1,15 @@
+.venv/
+__pycache__/
+*.pyc
+/data/
+/base/
+/runs/
+/release/
+checkpoints/
+*.parquet
+*.jsonl
+!tests/fixtures/*.jsonl
+.pytest_cache/
+.DS_Store
+dist/
+*.egg-info/
