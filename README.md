@@ -73,3 +73,9 @@ Synthetic data needs an OpenAI-compatible endpoint:
 export SYNTH_BASE_URL=http://localhost:8000/v1 SYNTH_MODEL=<any-openai-compatible-chat-model> SYNTH_API_KEY=<key-or-none>
 python scripts/03b_synth_generate.py --out data/synth --n 600000 --concurrency 32
 ```
+
+## Sponsor
+
+<a href="https://siam.ai" target="_blank" rel="noopener"><img src="https://raw.githubusercontent.com/iapp-technology/openthai-systemone/main/docs/assets/siamai-logo.png" alt="Siam AI Corporation" width="180" /></a>
+
+Training, evaluation and the free hosted API for this model run on NVIDIA H100 GPUs generously provided by [Siam AI Corporation](https://siam.ai). Thank you for backing open Thai AI.
