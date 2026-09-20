@@ -176,3 +176,9 @@ Thai sets and on NLI/topic tasks, and route low-confidence English yes/no decisi
 
 Apache-2.0. Built by iApp Technology / OpenThai on Qwen3.5-0.8B-Base (Apache-2.0). Inspired by TypeSafe AI's
 System One models (Jev); this is an independent open re-implementation and is not affiliated with TypeSafe AI.
+
+## Sponsor
+
+<a href="https://siam.ai" target="_blank" rel="noopener"><img src="https://huggingface.co/iapp/OpenThai-SystemOne/resolve/main/assets/siamai-logo.png" alt="Siam AI Corporation" width="180" /></a>
+
+Training, evaluation and the free hosted API for this model run on NVIDIA H100 GPUs generously provided by [Siam AI Corporation](https://siam.ai). Thank you for backing open Thai AI.
