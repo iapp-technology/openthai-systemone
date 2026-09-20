@@ -53,10 +53,14 @@ curl -s "$URL" -H "apikey: $IAPP_API_KEY" -H "content-type: application/json" -d
 
 ## 3. Computer-use / browser agent: which element to act on, and how
 
+Send the *current* step, not a multi-step plan: given "fill the email, then pay" the model jumps to the last step
+(pay button 55%, confidence 0.52). With the single step "fill in the customer's email" it answers the email box at 99%
+and TYPE at 94%, which is how an agent harness calls it anyway.
+
 ```bash
 curl -s "$URL" -H "apikey: $IAPP_API_KEY" -H "content-type: application/json" -d '{
   "state": {
-    "task": "กรอกอีเมลแล้วกดชำระเงิน",
+    "task": "กรอกอีเมลลูกค้า",
     "screen": "[3] heading \"ชำระเงิน\"\n[7] textbox \"อีเมล\" value=\"\"\n[8] textbox \"เบอร์โทร\" value=\"0812345678\"\n[9] checkbox \"ยอมรับเงื่อนไข\" checked=true\n[12] button \"ชำระเงิน\"\n[13] link \"ยกเลิก\""
   },
   "questions": {
