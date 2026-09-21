@@ -11,7 +11,8 @@ clip() {  # scenario skill lang seconds seed
   i=$((i+1)); name=$(printf "%02d_%s_%s_s%s" $i "$1" "$3" "$5")
   echo "[$(date +%H:%M:%S)] $name"
   python demo/doom_demo.py --model "$MODEL" --scenario "$1" --skill "$2" --lang "$3" --seconds "$4" --seed "$5" \
-    --out "$OUT/$name.mp4" --snapshot "$OUT/$name.png" 2>&1 | grep -E "^(episode|done)"
+    --out "$OUT/$name.mp4" --snapshot "$OUT/$name.png" > "runs/logs/clip_$name.log" 2>&1 || echo "  FAILED (see runs/logs/clip_$name.log)"
+  grep -E "^(episode|done)" "runs/logs/clip_$name.log" | tail -2
 }
 clip deadly_corridor 1 en 75 1
 clip deadly_corridor 1 th 75 2
