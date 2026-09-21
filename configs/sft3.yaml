@@ -1,0 +1,54 @@
+# Stage 2c (v0.3): continuation SFT from v0.2 with the weak-spot sets (real train splits + targeted synthetic)
+output_dir: runs/sft3
+model_path: runs/sft2/latest
+data:
+  train_globs:
+    - data/decision/*.train.jsonl
+    - data/synth/synth-[2-9]-*.jsonl
+    - data/synth_sentiment/*.jsonl
+    - data/decision_targeted/*.train.jsonl
+    - data/synth_targeted/*.jsonl
+  weights:
+    __default__: 1.0
+    # weak-spot sets (weight x sqrt(size))
+    targeted_grounded_qa: 3.0
+    targeted_summary_rating: 3.0
+    targeted_finegrained_intent: 3.0
+    targeted_safety: 2.5
+    targeted_paraphrase: 2.5
+    squad2_train: 2.0
+    boolq_train: 2.5
+    pubmedqa_artificial: 1.5
+    paws_train: 2.0
+    aegis2_train: 2.0
+    toxicchat: 1.5
+    xquad_th: 2.5
+    massive_de: 1.5
+    synth_sentiment_th: 2.0     # was 4.0 in round 2 (SIB-200 regressed)
+    synth: 1.5
+    mind2web: 2.0
+    xlam_tools: 1.5
+    massive_th: 1.5
+    xnli_th: 1.2
+    mnli: 0.6
+    mmlu: 0.5
+seq_len: 8192
+micro_batch: 16
+grad_accum: 4
+lr: 1.5e-5
+min_lr_ratio: 0.05
+weight_decay: 0.05
+warmup_ratio: 0.05
+epochs: 1.0
+max_steps: 5000
+grad_clip: 1.0
+bf16: true
+gradient_checkpointing: true
+save_every: 500
+log_every: 10
+seed: 3
+extra:
+  abstain_rate: 0.03
+  label_smoothing: 0.03
+  brier_weight: 0.0
+  train_temperature: false
