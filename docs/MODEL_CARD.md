@@ -17,7 +17,7 @@ tags:
 
 # OpenThai-SystemOne
 
-![OpenThai-SystemOne: Jev ภาษาไทยมาแล้ว — open Thai + English System One decision model](https://huggingface.co/iapp/OpenThai-SystemOne/resolve/main/assets/openthai-systemone-launch.jpg)
+![OpenThai-SystemOne: an open Thai + English System One decision model, 0.8B, Apache-2.0](https://huggingface.co/iapp/OpenThai-SystemOne/resolve/main/assets/openthai-systemone-launch-en.png)
 
 **An open Thai + English "System One" decision model.** It does not generate text. Given a *state* (any text or JSON)
 and typed *questions*, it returns calibrated probabilities over the options in **one forward pass**:
