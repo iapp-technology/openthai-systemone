@@ -123,6 +123,7 @@ curl -s "$URL" -H "apikey: $IAPP_API_KEY" -H "content-type: application/json" -d
 - `score` → `score` = Σ p_i·i (fractional), `probabilities` per level, `legend`.
 - `noul` → `noul` = P(yes).
 - Route low-`confidence` answers to a bigger model or a human. Max 255 options per `choice`, 2–10 levels per `score`, 64k tokens per request.
+- `usage.truncated` is `true` when the state was longer than the server's `max_state_tokens` (default 32k) and its middle was cut; the model did not see all of it, so treat the answer with less trust or split the state.
 
 ## Errors
 
