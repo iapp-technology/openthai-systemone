@@ -103,6 +103,20 @@ EOF
 curl -s https://api.iapp.co.th/v3/store/openthai/systemone/healthz -H "apikey: $IAPP_API_KEY"      # via gateway (if the route forwards GET)
 ```
 
+## Order-invariant mode (removes option-order bias)
+
+A single pass can favour an option by its position (Jev has the same issue). Add `"order_invariant": true` to average
+the answer over several cyclic option orders in one batched pass (~2× latency), or set `"permutations": 4` for an
+explicit count. It is **automatic for choice questions with more than 10 options**; `usage.permutations` tells you how
+many orders were averaged. Recommended for any question where the options are similar to each other.
+
+```bash
+curl -s "$URL" -H "apikey: $IAPP_API_KEY" -H "content-type: application/json" -d '{
+  "state": "โดนหักเงินซ้ำสองครั้ง ขอเงินคืนด่วน", "order_invariant": true,
+  "questions": {"dept": {"type": "choice", "instructions": "ทีมใดควรรับผิดชอบ", "criteria": {"billing": null, "technical": null, "sales": null}}}
+}'
+```
+
 ## Reading the response
 
 - `choice` → `choice` (best option), `probabilities` (sum to 1 over your options), `confidence` (1 − normalised entropy), `abstain` (P(none fits); our extension).

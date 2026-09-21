@@ -190,10 +190,12 @@ Thai sets and on NLI/topic tasks, and route low-confidence English yes/no decisi
 - Public 13-subset macro 61.9 → **63.2**; Wisesight 38.7 → **51.5**; MASSIVE-en 75.7 → 79.1; MASSIVE-th 86.4 → 88.6;
   MultiNLI 85.6 → 87.3 (ECE 0.035 → 0.016); Aegis2 58.0 → 61.6; PubMedQA 53.6 → 56.4.
 - Regression: SIB-200 Thai 77.5 → 74.0 (sentiment set was weighted 4×; will be lowered next round). Unchanged: SQuAD2, SummEval-relevance.
-- Known issue (measured on v0.2): answers can depend on the *order* of the options, mildly for ≤ 10 options
-  (5–12% of arg-max choices flip under a random permutation, mean probability shift 0.05–0.14) and strongly for very
-  large option sets (77-way banking77: 72% flip). A permutation-averaging inference mode is in progress; until then, for
-  large option sets query with several option orders and average the probabilities.
+- Known issue and fix: like Jev, a single forward pass is sensitive to the *order* of the options (measured on v0.2:
+  5–12% of arg-max choices flip under a random permutation for ≤ 10 options, 72% for 77-way banking77). The client and
+  API now have an **order-invariant mode** that averages the answer over several cyclic option orders in one batched
+  pass (`order_invariant: true` / `permutations: n`; automatic for choice questions with > 10 options). With it, on 360
+  held-out Thai questions: flips 18.9% → 3.3%, mean probability shift 0.19 → 0.08, accuracy 68.6 → 73.6, banking77
+  41.7 → 63.3. Cost: ~2× latency (batched), never more tokens per request in `usage.input_tokens`.
 - Live API switched to v0.2 (same checkpoint as these weights).
 
 **v0.1 — 2026-09-20**
