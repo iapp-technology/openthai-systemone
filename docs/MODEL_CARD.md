@@ -80,6 +80,31 @@ from transformers import AutoModel, AutoTokenizer
 model = AutoModel.from_pretrained("iapp/OpenThai-SystemOne", trust_remote_code=True)
 ```
 
+## Demo: playing Doom, no vision, no text
+
+![OpenThai-SystemOne playing Doom](https://huggingface.co/iapp/OpenThai-SystemOne/resolve/main/assets/doom_10s.gif)
+
+The model controls a Doom marine ([ViZDoom](https://github.com/Farama-Foundation/ViZDoom)) in real time. Every 4 game
+tics the engine's symbolic state is serialised to text, for example:
+
+```text
+health 100/100 | ammo 50 | kills 1
+crosshair: empty; nearest visible enemy 39deg to the RIGHT
+enemies: Zombieman 5m right -39deg VISIBLE; ChaingunGuy 19m right -24deg; Zombieman 19m ahead -12deg
+items: GreenArmor 41m right -18deg
+depth ahead: 35/255 (obstacle near)
+last actions: ATTACK ATTACK ATTACK ATTACK
+```
+
+and the model answers two typed questions in one forward pass: a `choice` over the 7 actions (the key that gets
+pressed) and a `noul` "is an enemy in the crosshair". About 41 ms per decision on one H100 (~24 decisions/s),
+0 output tokens, and no Doom data in training: everything comes from reading the state and the option descriptions.
+It misses shots and dies on hard levels; the point is the speed and the calibrated probabilities, the same mechanics
+that route tickets or pick UI elements for an agent.
+
+Run it on your machine (iApp API key or the local weights, live HUD in Thai or English, optional recording):
+**https://github.com/iapp-technology/openthai-systemone-doom**
+
 ## Evaluation
 
 All numbers are zero-shot: the model sees only the state, the instructions and the option names/descriptions.
