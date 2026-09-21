@@ -101,12 +101,17 @@ Answer = Union[NoulAnswer, ChoiceAnswer, ScoreAnswer]
 class Usage(BaseModel):
     input_tokens: int
     output_tokens: int = 0
+    permutations: int = 1  # OpenThai extension: number of option orders averaged (order-invariant mode)
 
 
 class SystemOneRequest(BaseModel):
     state: Union[str, Dict[str, Any], List[Any]]
     model: str = "openthai-systemone"
     questions: Dict[str, Question] = Field(discriminator=None)
+    # OpenThai extensions. order_invariant=True averages the answer over several option orders (removes position
+    # bias, ~2x latency); None = automatic (on for choice questions with > 10 options); permutations overrides the count.
+    order_invariant: Optional[bool] = None
+    permutations: Optional[int] = Field(default=None, ge=1, le=32)
 
     @model_validator(mode="after")
     def _non_empty(self):

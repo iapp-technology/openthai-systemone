@@ -56,11 +56,11 @@ def macro_f1(y_true, y_pred):
     return sum(f1s) / len(f1s) if f1s else 0.0
 
 
-def evaluate_source(client, records, batch_size):
+def evaluate_source(client, records, batch_size, permutations=1):
     stats = defaultdict(list)
     for i in range(0, len(records), batch_size):
         chunk = records[i : i + batch_size]
-        resps = client.system_one_batch([(r.state, r.questions) for r in chunk])
+        resps = client.system_one_batch([(r.state, r.questions) for r in chunk], permutations=permutations)
         for r, resp in zip(chunk, resps):
             for qid, ans in resp.answers.items():
                 gold = r.labels.get(qid)
@@ -121,6 +121,7 @@ def main():
     ap.add_argument("--limit", type=int, default=0)
     ap.add_argument("--batch-size", type=int, default=16)
     ap.add_argument("--out", default="")
+    ap.add_argument("--permutations", type=int, default=1, help="option orders averaged per choice question (1 = single order)")
     args = ap.parse_args()
     client = SystemOneClient(args.model)
     files = sorted(glob.glob(str(Path(args.data) / "*.eval.jsonl")))
@@ -134,11 +135,12 @@ def main():
         if args.limit:
             recs = recs[: args.limit]
         t0 = time.time()
-        results[name] = evaluate_source(client, recs, args.batch_size)
+        results[name] = evaluate_source(client, recs, args.batch_size, args.permutations)
         results[name]["seconds"] = round(time.time() - t0, 1)
         print(name, json.dumps(results[name], ensure_ascii=False), flush=True)
     results["_latency_ms_255_options_batch1"] = latency(client)
     results["_device"] = client.device
+    results["_permutations"] = args.permutations
     print(json.dumps(results, indent=2, ensure_ascii=False))
     if args.out:
         Path(args.out).write_text(json.dumps(results, indent=2, ensure_ascii=False))

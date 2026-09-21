@@ -37,7 +37,8 @@ def healthz():
 @app.post("/v1/systemone", response_model=SystemOneResponse)
 def system_one(req: SystemOneRequest):
     try:
-        resp = get_client().system_one(req.state, req.questions)
+        n = req.permutations if req.permutations else (8 if req.order_invariant else (1 if req.order_invariant is False else None))
+        resp = get_client().system_one(req.state, req.questions, permutations=n)
     except ValidationError as e:  # pragma: no cover
         raise HTTPException(status_code=422, detail=e.errors())
     resp.model = req.model or resp.model

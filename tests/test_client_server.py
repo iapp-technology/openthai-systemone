@@ -82,3 +82,43 @@ def test_http_server(model_dir, monkeypatch):
         assert body["model"] == "jev-latest" and set(body["answers"]) == {"x", "n"}
         bad = tc.post("/v1/systemone", json={"state": "x", "questions": {"q": {"type": "score", "instructions": "?", "criteria": ["only-one"]}}})
         assert bad.status_code == 422
+
+
+def test_permutation_averaging_is_order_invariant(model_dir):
+    c = SystemOneClient(model_dir, device="cpu")
+    a = {"x": "first", "y": "second"}
+    b = {"y": "second", "x": "first"}
+    ra = c.system_one("some state", {"q": Choice(instructions="?", criteria=a)}, permutations=2)
+    rb = c.system_one("some state", {"q": Choice(instructions="?", criteria=b)}, permutations=2)
+    # with k=2 the two cyclic shifts cover both orders, so both calls average the same two encodings
+    for k in a:
+        assert abs(ra.answers["q"].probabilities[k] - rb.answers["q"].probabilities[k]) < 1e-5
+    assert ra.usage.permutations == 2
+    single = c.system_one("some state", {"q": Choice(instructions="?", criteria=a)}, permutations=1)
+    assert single.usage.permutations == 1
+
+
+def test_auto_mode_turns_on_for_large_option_sets(model_dir):
+    c = SystemOneClient(model_dir, device="cpu")
+    small = c.system_one("s", {"q": Choice(instructions="?", criteria={f"o{i}": None for i in range(5)})})
+    large = c.system_one("s", {"q": Choice(instructions="?", criteria={f"o{i}": None for i in range(20)})})
+    assert small.usage.permutations == 1 and large.usage.permutations == 8
+    assert abs(sum(large.answers["q"].probabilities.values()) - 1) < 1e-5 and len(large.answers["q"].probabilities) == 20
+    # score / noul questions are never permuted and still decode correctly alongside a permuted choice
+    mixed = c.system_one("s", {"q": Choice(instructions="?", criteria={f"o{i}": None for i in range(20)}),
+                               "lvl": Score(instructions="?", criteria=["a", "b", "c"]), "yn": Noul(instructions="?")}, permutations=3)
+    assert mixed.usage.permutations == 3 and 0 <= mixed.answers["lvl"].score <= 2 and 0 <= mixed.answers["yn"].noul <= 1
+
+
+def test_server_order_invariant_flag(model_dir, monkeypatch):
+    from fastapi.testclient import TestClient
+
+    from openthai_systemone import server
+
+    monkeypatch.setenv("OPENTHAI_SYSTEMONE_MODEL", model_dir)
+    server.get_client.cache_clear()
+    with TestClient(server.app) as tc:
+        body = {"state": "x", "questions": {"q": {"type": "choice", "instructions": "?", "criteria": {"a": None, "b": None, "c": None}}}}
+        assert tc.post("/v1/systemone", json=body).json()["usage"]["permutations"] == 1
+        assert tc.post("/v1/systemone", json={**body, "order_invariant": True}).json()["usage"]["permutations"] == 3
+        assert tc.post("/v1/systemone", json={**body, "permutations": 2}).json()["usage"]["permutations"] == 2

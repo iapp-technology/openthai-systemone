@@ -49,21 +49,28 @@ class SystemOneClient:
         self.pad_id = pad if pad is not None else (self.tok.eos_token_id or 0)
 
     # ------------------------------------------------------------------ public API
+    AUTO_INVARIANT_MIN_OPTIONS = 11  # auto mode: average orders when a choice question has this many options or more
+    AUTO_PERMUTATIONS = 8
+
     @torch.no_grad()
     def system_one(
         self,
         state: Union[str, Dict[str, Any], List[Any]],
         questions: Dict[str, Union[Question, Dict[str, Any]]],
+        *,
+        permutations: Optional[int] = None,
     ) -> SystemOneResponse:
-        return self.system_one_batch([(state, questions)])[0]
+        return self.system_one_batch([(state, questions)], permutations=permutations)[0]
+
+    @staticmethod
+    def _cyclic_orders(k: int, n: int) -> List[List[int]]:
+        """n distinct cyclic shifts of range(k), evenly spread, identity first."""
+        n = max(1, min(n, k))
+        offsets = sorted({round(j * k / n) % k for j in range(n)})
+        return [[(i + off) % k for i in range(k)] for off in offsets]
 
     @torch.no_grad()
-    def system_one_batch(
-        self,
-        items: Sequence[tuple],
-    ) -> List[SystemOneResponse]:
-        parsed = [(s, {k: parse_question(v) for k, v in qs.items()}) for s, qs in items]
-        encs = [self.fmt.encode(s, qs) for s, qs in parsed]
+    def _run(self, encs: Sequence[Encoded]) -> torch.Tensor:
         batch = collate(encs, self.pad_id)
         qtypes = torch.full_like(batch["option_counts"], -1)
         for b, e in enumerate(encs):
@@ -78,26 +85,70 @@ class SystemOneClient:
             qtypes=qtypes.to(self.device),
             include_abstain=True,
         )
-        probs = out.probs.float().cpu()
-        return [self._decode(e, probs[b]) for b, e in enumerate(encs)]
+        return out.probs.float().cpu()
+
+    @torch.no_grad()
+    def system_one_batch(
+        self,
+        items: Sequence[tuple],
+        *,
+        permutations: Optional[int] = None,
+    ) -> List[SystemOneResponse]:
+        """permutations: None = automatic, 1 = single order, n = average over n cyclic option orders per choice question."""
+        parsed = [(s, {k: parse_question(v) for k, v in qs.items()}) for s, qs in items]
+        plans = []  # per item: list of option_orders dicts (one per permutation)
+        for s, qs in parsed:
+            choice_k = {qid: len(q.criteria) for qid, q in qs.items() if isinstance(q, Choice)}
+            n = permutations
+            if n is None:
+                n = self.AUTO_PERMUTATIONS if any(k >= self.AUTO_INVARIANT_MIN_OPTIONS for k in choice_k.values()) else 1
+            n = max(1, min(n, max(choice_k.values(), default=1)))
+            orders = {qid: self._cyclic_orders(k, n) for qid, k in choice_k.items()}
+            plans.append([{qid: ords[j % len(ords)] for qid, ords in orders.items()} for j in range(n)])
+        encs, owner = [], []
+        for i, ((s, qs), plan) in enumerate(zip(parsed, plans)):
+            for oo in plan:
+                encs.append(self.fmt.encode(s, qs, option_orders=oo))
+                owner.append(i)
+        probs = self._run(encs)
+        # average per item, per question, keyed by option name (order-independent)
+        results = []
+        for i, (s, qs) in enumerate(parsed):
+            idx = [j for j, o in enumerate(owner) if o == i]
+            base = encs[idx[0]]
+            per_q: Dict[str, Dict[str, float]] = {}
+            per_q_abstain: Dict[str, float] = {}
+            for j in idx:
+                e = encs[j]
+                for qi, spec in enumerate(e.specs):
+                    p = probs[j][qi]
+                    k = len(spec.option_names)
+                    pk = p[:k] / p[:k].sum().clamp(min=1e-12)
+                    d = per_q.setdefault(spec.qid, {})
+                    for name, v in zip(spec.option_names, pk.tolist()):
+                        d[name] = d.get(name, 0.0) + v / len(idx)
+                    per_q_abstain[spec.qid] = per_q_abstain.get(spec.qid, 0.0) + float(p[self.model.config.abstain_slot]) / len(idx)
+            results.append(self._decode_named(base, per_q, per_q_abstain, len(idx)))
+        return results
 
     # ------------------------------------------------------------------ decoding
-    def _decode(self, enc: Encoded, probs: torch.Tensor) -> SystemOneResponse:
+    def _decode_named(self, enc: Encoded, per_q: Dict[str, Dict[str, float]], abstain: Dict[str, float], n_perm: int) -> SystemOneResponse:
         answers: Dict[str, Answer] = {}
-        for qi, spec in enumerate(enc.specs):
-            p = probs[qi]
+        for spec in enc.specs:
+            d = per_q[spec.qid]
             k = len(spec.option_names)
-            abstain = float(p[self.model.config.abstain_slot])
-            pk = p[:k]
-            pk = pk / pk.sum().clamp(min=1e-12)  # renormalise over the real options
+            # canonical option order = the order the caller gave (identity permutation = enc built from plan[0])
+            names = spec.option_names if spec.qtype != "choice" else list(d.keys())
+            pk = torch.tensor([d[n] for n in names], dtype=torch.float32)
+            pk = pk / pk.sum().clamp(min=1e-12)
             conf = confidence_from_probs(pk, k)
             if spec.qtype == "noul":
-                answers[spec.qid] = NoulAnswer(noul=float(pk[1]))
+                answers[spec.qid] = NoulAnswer(noul=float(d["yes"]))
             elif spec.qtype == "choice":
-                prob_map = {spec.option_names[i]: float(pk[i]) for i in range(k)}
+                prob_map = {n: float(v) for n, v in zip(names, pk.tolist())}
                 best = max(prob_map, key=prob_map.get)
-                answers[spec.qid] = ChoiceAnswer(choice=best, probabilities=prob_map, confidence=conf, abstain=abstain)
-            else:  # score
+                answers[spec.qid] = ChoiceAnswer(choice=best, probabilities=prob_map, confidence=conf, abstain=abstain.get(spec.qid))
+            else:  # score: names are "0".."k-1" in level order
                 levels = torch.arange(k, dtype=torch.float32)
                 score = float((pk * levels).sum())
                 answers[spec.qid] = ScoreAnswer(
@@ -106,4 +157,4 @@ class SystemOneClient:
                     probabilities={str(i): float(pk[i]) for i in range(k)},
                     confidence=conf,
                 )
-        return SystemOneResponse(model=self.model_name, answers=answers, usage=Usage(input_tokens=enc.n_tokens))
+        return SystemOneResponse(model=self.model_name, answers=answers, usage=Usage(input_tokens=enc.n_tokens, permutations=n_perm))

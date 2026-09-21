@@ -86,12 +86,14 @@ def question_to_spec(
     shuffle: bool = False,
     rng: Optional[random.Random] = None,
     drop_label: bool = False,
+    perm: Optional[Sequence[int]] = None,
 ) -> QuestionSpec:
     """Flatten a typed question.
 
     label: for training. Choice -> option name; Score -> level index (int); Noul -> bool.
     shuffle: permute option order (Choice only; Score/Noul order is semantic).
     drop_label: remove the correct option from a Choice so the target becomes ABSTAIN_SLOT.
+    perm: explicit option order for a Choice (list of original indices), e.g. a cyclic shift for order-invariant inference.
     """
     if isinstance(q, Choice):
         names = list(q.criteria.keys())
@@ -107,7 +109,9 @@ def question_to_spec(
                 raise ValueError("cannot drop the only option")
             idx.remove(label_idx)
             label_idx = None
-        if shuffle:
+        if perm is not None:
+            idx = [i for i in perm if i in idx]
+        elif shuffle:
             (rng or random).shuffle(idx)
         names_p = [names[i] for i in idx]
         descs_p = [descs[i] for i in idx]
@@ -196,10 +200,12 @@ class Formatter:
         drop_label_for: Optional[Sequence[str]] = None,
         rng: Optional[random.Random] = None,
         state_indent: Optional[int] = None,
+        option_orders: Optional[Dict[str, Sequence[int]]] = None,
     ) -> Encoded:
         rng = rng or random.Random()
         labels = labels or {}
         drop = set(drop_label_for or [])
+        option_orders = option_orders or {}
         qids = list(questions.keys())
         if shuffle_questions:
             rng.shuffle(qids)
@@ -212,6 +218,7 @@ class Formatter:
                 shuffle=shuffle_options,
                 rng=rng,
                 drop_label=qid in drop,
+                perm=option_orders.get(qid),
             )
             for qid in qids
         ]
