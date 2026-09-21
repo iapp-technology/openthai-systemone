@@ -49,14 +49,14 @@ SCENARIOS = {  # scenario -> (goal sentence, situation sentence)
 }
 THREAT_Q = "Is an enemy inside the crosshair (bearing within 6 degrees, in view) so that firing now would hit it?"
 HUD = {
-    "en": {"title": "OpenThai-SystemOne  ·  Doom", "sub": "0.8B decision model · no vision · no text generation · 1 forward pass per step",
+    "en": {"title": "OpenThai-SystemOne  ·  Doom", "sub": "0.8B decision model · no vision · no text generation · 1 pass per step",
            "state": "STATE (what the model reads)", "choice": "CHOICE · next action", "noul": "NOUL · enemy in crosshair?", "pyes": "P(yes)",
            "lat": "latency {lat:4.0f} ms  ·  {dps:3.1f} decisions/s  ·  step {step}", "stats": "health {hp:.0f}   kills {kills:.0f}   output tokens: 0",
            "foot": "huggingface.co/iapp/OpenThai-SystemOne · Apache-2.0"},
-    "th": {"title": "OpenThai-SystemOne  ·  Doom", "sub": "โมเดลตัดสินใจ 0.8B · ไม่ใช้ภาพ · ไม่สร้างข้อความ · คำนวณ 1 รอบต่อการตัดสินใจ",
+    "th": {"title": "OpenThai-SystemOne  ·  Doom", "sub": "โมเดลตัดสินใจ 0.8B · ไม่ใช้ภาพ · ไม่สร้างข้อความ · 1 forward pass ต่อก้าว",
            "state": "STATE · สิ่งที่โมเดลอ่าน", "choice": "CHOICE · เลือกการกระทำถัดไป", "noul": "NOUL · มีศัตรูอยู่ในเป้าหรือไม่", "pyes": "P(ใช่)",
            "lat": "หน่วง {lat:4.0f} ms  ·  {dps:3.1f} ครั้ง/วินาที  ·  ก้าวที่ {step}", "stats": "พลังชีวิต {hp:.0f}   สังหาร {kills:.0f}   โทเคนที่สร้าง: 0",
-           "foot": "huggingface.co/iapp/OpenThai-SystemOne · Apache-2.0 · โอเพนซอร์สโดย iApp / OpenThaiGPT"},
+           "foot": "huggingface.co/iapp/OpenThai-SystemOne · Apache-2.0 · iApp / OpenThaiGPT"},
 }
 
 
