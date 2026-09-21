@@ -116,20 +116,20 @@ on `scripts/06b_public_benchmarks.py` rebuilds of the same subsets.
 
 | subset | type | n | **OpenThai 0.8B** | Nimble-9B | Jev 1.13.0 | our ECE |
 |---|---|---|---|---|---|---|
-| aegis2 | noul | 250 | 61.6 | 81.2 | 80.4 | 0.217 |
-| boolq | noul | 300 | 64.7 | 86.0 | 89.7 | 0.213 |
-| civil_comments | noul | 300 | **79.0** | 70.3 | 81.0 | 0.114 |
-| helpsteer2 | score | 250 | **41.6** | 39.0 | 34.1 | 0.400 |
-| massive-de-DE | choice | 350 | 67.4 | 83.4 | 86.9 | 0.169 |
-| massive-en-US | choice | 350 | 79.1 | 86.9 | 87.4 | 0.101 |
-| multinli | choice | 299 | **87.3** | 85.3 | 82.9 | 0.016 |
-| paws | noul | 250 | 68.0 | 82.8 | 89.2 | 0.172 |
-| pubmedqa | choice | 250 | 56.4 | 75.6 | 77.2 | 0.188 |
-| squad2 | noul | 299 | 50.2 | 80.6 | 82.9 | 0.473 |
-| summeval-consistency | score | 144 | **84.0** | 75.7 | 81.2 | 0.083 |
-| summeval-relevance | score | 240 | 14.2 | 49.2 | 35.0 | 0.810 |
-| vitaminc-dev | choice | 599 | 68.6 | 76.6 | 80.1 | 0.124 |
-| **macro average** | | | **63.2** | 74.8 | 76.0 | |
+| aegis2 | noul | 250 | **83.2** | 81.2 | 80.4 | 0.065 |
+| boolq | noul | 300 | 79.7 | 86.0 | 89.7 | 0.049 |
+| civil_comments | noul | 300 | **79.0** | 70.3 | 81.0 | 0.087 |
+| helpsteer2 | score | 250 | **41.6** | 39.0 | 34.1 | 0.371 |
+| massive-de-DE | choice | 350 | **88.3** | 83.4 | 86.9 | 0.057 |
+| massive-en-US | choice | 350 | **88.3** | 86.9 | 87.4 | 0.070 |
+| multinli | choice | 299 | **89.0** | 85.3 | 82.9 | 0.053 |
+| paws | noul | 250 | **94.0** | 82.8 | 89.2 | 0.035 |
+| pubmedqa | choice | 250 | 64.0 | 75.6 | 77.2 | 0.259 |
+| squad2 | noul | 299 | **89.3** | 80.6 | 82.9 | 0.041 |
+| summeval-consistency | score | 144 | 75.0 | 75.7 | 81.2 | 0.076 |
+| summeval-relevance | score | 240 | 21.7 | 49.2 | 35.0 | 0.356 |
+| vitaminc-dev | choice | 599 | 72.5 | 76.6 | 80.1 | 0.118 |
+| **macro average** | | | **74.3** | 74.8 | 76.0 | |
 
 For scale: Bespoke reports raw Qwen3.5-0.8B at 45.4 on their *private* 324-item holdout (not this bench), Nimble-9B at 90.1, Jev at 93.2.
 `choice`/`noul` report accuracy; `score` reports exact-level match. Bold = ahead of Bespoke-Nimble-9B.
@@ -141,27 +141,27 @@ summary *relevance* scoring, which is the one subset where our score head is bad
 
 | set | type | n | accuracy | macro-F1 / MAE | ECE | note |
 |---|---|---|---|---|---|---|
-| MASSIVE-th intent (60-way) | choice | 5007 | **88.6** | F1 0.862 | 0.049 | eval split |
-| Prachathai67k topics | choice | 3501 | **97.6** | F1 0.913 | 0.006 | eval split |
+| MASSIVE-th intent (60-way) | choice | 5007 | **90.0** | F1 0.869 | 0.043 | eval split |
+| Prachathai67k topics | choice | 3501 | **98.1** | F1 0.938 | 0.004 | eval split |
 | Prachathai67k topics | noul | 13119 | **94.2** |  | 0.008 | eval split |
-| XNLI-th | choice | 2490 | **76.9** | F1 0.770 | 0.037 | eval split |
-| XNLI-th (entailment yes/no) | noul | 2490 | **85.0** |  | 0.040 | eval split |
-| SIB-200 Thai topic (7-way) | choice | 204 | **74.0** | F1 0.708 | 0.098 | whole dataset held out (v0.1: 77.5) |
-| Thai contrastive pairs (one-fact flips) | choice | 296 | **79.7** | F1 0.712 | 0.109 | synthetic, eval-only |
-| Thai contrastive pairs | score | 56 | **76.8** | MAE 0.42 | 0.137 | synthetic, eval-only |
-| Thai contrastive pairs | noul | 248 | **82.7** |  | 0.094 | synthetic, eval-only |
-| Wongnai review stars (1–5) | score | 6203 | **63.2** | MAE 0.44 | 0.062 | eval split |
-| Wisesight sentiment (4-class) | choice | 2671 | 51.5 | F1 0.448 | 0.322 | whole dataset held out — v0.1 was 38.7; the v0.2 Thai sentiment set lifted it to 51.5 (still the weakest Thai set) |
-| banking77 intent (77-way, English) | choice | 3076 | 37.8 | F1 0.341 | 0.177 | whole dataset held out — weak on fine-grained 77-way intents (v0.1: 32.7) |
-| xLAM tool selection (English) | choice | 884 | **99.4** | F1 0.986 | 0.004 | eval slice |
+| XNLI-th | choice | 2490 | **77.1** | F1 0.772 | 0.045 | eval split |
+| XNLI-th (entailment yes/no) | noul | 2490 | **84.3** |  | 0.049 | eval split |
+| SIB-200 Thai topic (7-way) | choice | 204 | **77.9** | F1 0.759 | 0.084 | whole dataset held out (v0.1: 77.5) |
+| Thai contrastive pairs (one-fact flips) | choice | 296 | **80.7** | F1 0.734 | 0.098 | synthetic, eval-only |
+| Thai contrastive pairs | score | 56 | **78.6** | MAE 0.35 | 0.156 | synthetic, eval-only |
+| Thai contrastive pairs | noul | 248 | **83.5** |  | 0.109 | synthetic, eval-only |
+| Wongnai review stars (1–5) | score | 6203 | **63.5** | MAE 0.44 | 0.039 | eval split |
+| Wisesight sentiment (4-class) | choice | 2671 | 51.6 | F1 0.448 | 0.353 | whole dataset held out — v0.1 38.7 → v0.2 51.5 → now 51.6 (weakest Thai set; use order-invariant mode) |
+| banking77 intent (77-way, English) | choice | 3076 | 45.4 | F1 0.417 | 0.236 | whole dataset held out — 77-way near-duplicate intents (v0.1 32.7; 61.7 with order-invariant mode on v0.2) |
+| xLAM tool selection (English) | choice | 884 | **99.4** | F1 0.986 | 0.006 | eval slice |
 
 Batch-1 latency, one question with 255 options, H100 shared with a training job: **44 ms** (public bench run),
 48 ms (held-out run). A 3-question Thai ticket (166 tokens): ~40 ms on H100, 154 ms on a MacBook M3 Max (MPS).
 
 ### Calibration (Stage 3)
 
-v0.2 learned temperatures: choice 1.055, noul 1.047, score 1.000 (the before/after table below was measured on v0.1;
-the v0.2 procedure is identical).
+v0.3 learned temperatures: choice 1.055, noul 1.047, score 1.008 (the before/after table below was measured on v0.1;
+the procedure is identical in every version).
 
 After SFT (12k steps) the backbone was frozen and the slot head plus one temperature per question type were trained for
 400 steps on the SFT mixture with cross-entropy + Brier loss (`configs/calib.yaml`, `brier_weight: 1.0`,
@@ -195,19 +195,26 @@ Thai sets and on NLI/topic tasks, and route low-confidence English yes/no decisi
 * Text only. Up to 255 options per question in one stage (bucket into groups for more). 64k tokens per request.
 * It is a small model: use the `confidence` field and route low-confidence cases to a bigger model or a human.
 * Not a reasoning model: it will not do multi-step verification or arithmetic.
-* v0.2 known weak spots (numbers above): extractive-QA style yes/no (squad2 at chance, boolq 65, pubmedqa
-  56), summary *relevance* scoring (14), fine-grained 77-way English intents (banking77
-  38) and Thai social sentiment (wisesight 51, up from 38.7). Targeted data for each is in progress for v0.3.
+* v0.3 known weak spots (numbers above): summary *relevance* scoring (22) and helpfulness
+  scoring (42) — the two 5-level rating tasks; fine-grained 77-way English intents (banking77 45 single-order); Thai social
+  sentiment (wisesight 52); PubMedQA 3-way (64).
 * English calibration is weaker than Thai (median ECE 0.15 vs ≤ 0.05): the training mix is Thai-heavy by design.
 
 ## Versions
 
 | version | date | change | public macro | Wisesight |
 |---|---|---|---|---|
+| v0.3 | 2026-09-22 | +5,000 SFT steps from v0.2 with 177k real train-split records + 78k targeted synthetic records for the weak spots (grounded QA, summary rating, fine-grained intents, safety, paraphrase), re-calibrated | **74.3** | 51.6 |
 | v0.2 | 2026-09-21 | +3,000 SFT steps from v0.1 with a 22k-record synthetic Thai social-sentiment set (4/3/5-class, yes/no, score schemes), re-calibrated | **63.2** | 51.5 |
 | v0.1 | 2026-09-20 | initial release: Thai CPT 4.47B tokens, 12k-step SFT, calibration | 61.9 | 38.7 |
 
 ## Changelog
+
+**v0.3 — 2026-09-22**
+- Continued fine-tuning for 5,000 steps from v0.2 with the weak-spot data: real train splits (SQuAD2, BoolQ, PubMedQA-artificial, PAWS, Aegis2, ToxicChat, XQuAD-th, MASSIVE-de; 177k records) and five targeted synthetic sets generated with Qwen3.6-35B-A3B and blind-checked (grounded yes/no QA with near-miss unanswerables 30k, summary rating on the SummEval rubrics 20k, 40–120-way near-duplicate intent taxonomies 12k, safety judgments 8k, adversarial paraphrases 8k); sentiment set weight lowered from 4× to 2×; re-calibrated.
+- Public 13-subset macro 63.2 → **74.3** (Nimble-9B 74.8): SQuAD2 50.2 → 89.3, PAWS 68.0 → 94.0, Aegis2 61.6 → 83.2, MASSIVE-de 67.4 → 88.3, BoolQ 64.7 → 79.7, MASSIVE-en 79.1 → 88.3, PubMedQA 56.4 → 64.0, SummEval-relevance 14.2 → 21.7, VitaminC 68.6 → 72.5, MultiNLI 87.3 → 89.0. ECE improved on 11 of 13 subsets.
+- Regression: SummEval-consistency 84.0 → 75.0 (the synthetic consistency set only covers levels 1/3/5; levels 2/4 will be added). Thai held-out sets all flat or up (SIB-200 74.0 → 77.9, banking77 37.8 → 45.4 single-order).
+- Note: SQuAD2, BoolQ, PAWS, Aegis2 and MASSIVE-de are no longer "never trained on": their *train* splits are now in the mix; the public-bench subsets still use the validation/test splits only.
 
 **v0.2 — 2026-09-21**
 - Continued fine-tuning for 3,000 steps from v0.1 with a new 22k-record synthetic Thai social-media sentiment set
