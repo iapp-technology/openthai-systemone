@@ -357,6 +357,105 @@ def xlam_tools(limit, rng):
                      split="eval" if i % 50 == 0 else "train")
 
 
+# ----------------------------------------------------------------------------- weak-spot real data (v0.3)
+# Train splits only; the public-bench eval subsets use validation/test/pqa_labeled, so no overlap. Instructions and
+# criteria follow the public-bench wording (configs/nimble_public_bench.json) so train and eval phrasing match.
+import json as _json
+_DEFS = _json.loads((Path(__file__).resolve().parents[1] / "configs" / "nimble_public_bench.json").read_text())
+
+
+@converter("squad2_train")
+def squad2_train(limit, rng):
+    d = _DEFS["squad2"]
+    ds = load("rajpurkar/squad_v2", split="train")
+    for i, ex in enumerate(take(ds, limit)):
+        texts = [t for t in ex["answers"]["text"] if t.strip()]
+        yield Record(f"squad2tr-{i}", "squad2_train", "en", {"paragraph": ex["context"], "question": ex["question"]},
+                     {"answerable": noul_q(d["INSTRUCTIONS"], d["CRITERIA"]["true"], d["CRITERIA"]["false"])}, {"answerable": bool(texts)})
+
+
+@converter("boolq_train")
+def boolq_train(limit, rng):
+    d = _DEFS["boolq"]
+    ds = load("google/boolq", split="train")
+    for i, ex in enumerate(take(ds, limit)):
+        yield Record(f"boolqtr-{i}", "boolq_train", "en", {"passage": ex["passage"], "question": ex["question"]},
+                     {"yes": noul_q(d["INSTRUCTIONS"], d["CRITERIA"]["true"], d["CRITERIA"]["false"])}, {"yes": bool(ex["answer"])})
+
+
+@converter("pubmedqa_artificial")
+def pubmedqa_artificial(limit, rng):
+    d = _DEFS["pubmedqa"]
+    ds = load("qiaojin/PubMedQA", "pqa_artificial", split="train")
+    for i, ex in enumerate(take(ds, limit)):
+        dec = (ex.get("final_decision") or "").strip().lower()
+        ctx = ex["context"]["contexts"] if isinstance(ex["context"], dict) else ex["context"]
+        ctx = [c for c in (ctx or []) if isinstance(c, str) and c.strip()]
+        if dec not in d["CRITERIA"] or not ctx:
+            continue
+        yield Record(f"pubmedart-{i}", "pubmedqa_artificial", "en", {"question": ex["question"], "abstract_context": " ".join(ctx)},
+                     {"verdict": choice_q(d["INSTRUCTIONS"], list(d["CRITERIA"]), d["CRITERIA"])}, {"verdict": dec})
+
+
+@converter("paws_train")
+def paws_train(limit, rng):
+    d = _DEFS["paws"]
+    ds = load("google-research-datasets/paws", "labeled_final", split="train")
+    for i, ex in enumerate(take(ds, limit)):
+        yield Record(f"pawstr-{i}", "paws_train", "en", {"sentence_1": ex["sentence1"], "sentence_2": ex["sentence2"]},
+                     {"same": noul_q(d["INSTRUCTIONS"], d["CRITERIA"]["true"], d["CRITERIA"]["false"])}, {"same": ex["label"] == 1})
+
+
+@converter("aegis2_train")
+def aegis2_train(limit, rng):
+    d = _DEFS["aegis2"]
+    ds = load("nvidia/Aegis-AI-Content-Safety-Dataset-2.0", split="train")
+    for i, ex in enumerate(take(ds, limit)):
+        if not isinstance(ex.get("prompt"), str) or not ex["prompt"].strip() or ex.get("prompt_label") not in d["LABELS"] or ex.get("reconstruction_id_if_redacted") is not None:
+            continue
+        yield Record(f"aegistr-{i}", "aegis2_train", "en", {"user_message": ex["prompt"].strip()},
+                     {"unsafe": noul_q(d["INSTRUCTIONS"], d["CRITERIA"]["true"], d["CRITERIA"]["false"])}, {"unsafe": d["LABELS"][ex["prompt_label"]]})
+
+
+@converter("toxicchat")
+def toxicchat(limit, rng):
+    d = _DEFS["aegis2"]
+    ds = load("lmsys/toxic-chat", "toxicchat0124", split="train")
+    for i, ex in enumerate(take(ds, limit)):
+        if not isinstance(ex.get("user_input"), str) or not ex["user_input"].strip():
+            continue
+        yield Record(f"toxicchat-{i}", "toxicchat", "en", {"user_message": ex["user_input"].strip()},
+                     {"unsafe": noul_q(d["INSTRUCTIONS"], d["CRITERIA"]["true"], d["CRITERIA"]["false"])}, {"unsafe": bool(int(ex["toxicity"]))})
+
+
+@converter("xquad_th")
+def xquad_th(limit, rng):
+    """Thai answerability: real (question, context) positives + negatives from other contexts (easy) and same-context
+    questions whose answer text is absent (none available) -> the hard Thai negatives come from targeted_grounded_qa."""
+    inst = "ย่อหน้านี้มีข้อมูลที่ตอบคำถามได้หรือไม่ ถ้าย่อหน้าพูดถึงเรื่องเดียวกันแต่ไม่ได้ระบุข้อเท็จจริงที่ถามให้ถือว่าตอบไม่ได้"
+    ds = load("google/xquad", "xquad.th", split="validation")
+    rows = list(take(ds, limit))
+    for i, ex in enumerate(rows):
+        neg = rows[rng.randrange(len(rows))]
+        yield Record(f"xquadth-{i}p", "xquad_th", "th", {"ย่อหน้า": ex["context"], "คำถาม": ex["question"]},
+                     {"answerable": noul_q(inst, "ย่อหน้าระบุคำตอบไว้อย่างชัดเจน", "ย่อหน้าไม่ได้ระบุคำตอบ")}, {"answerable": True})
+        if neg["context"] != ex["context"]:
+            yield Record(f"xquadth-{i}n", "xquad_th", "th", {"ย่อหน้า": neg["context"], "คำถาม": ex["question"]},
+                         {"answerable": noul_q(inst, "ย่อหน้าระบุคำตอบไว้อย่างชัดเจน", "ย่อหน้าไม่ได้ระบุคำตอบ")}, {"answerable": False})
+
+
+@converter("massive_de")
+def massive_de(limit, rng):
+    d = _DEFS["massive"]
+    ds = load("mteb/amazon_massive_scenario", "de", split="train")
+    for i, ex in enumerate(take(ds, limit)):
+        scen = ex.get("label_text") or ex.get("label")
+        if scen not in d["CRITERIA"]:
+            continue
+        yield Record(f"massive-de-{i}", "massive_de", "de", {"utterance": ex["text"], "locale": "de-DE"},
+                     {"scenario": choice_q(d["INSTRUCTIONS"], list(d["CRITERIA"]), d["CRITERIA"])}, {"scenario": scen})
+
+
 # ----------------------------------------------------------------------------- driver
 def main():
     ap = argparse.ArgumentParser()
