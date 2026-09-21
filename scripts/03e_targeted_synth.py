@@ -80,7 +80,7 @@ class Seeds:
         self.rng = random.Random(seed)
         self._th_wiki = self._en_wiki = self._thaisum = self._cnn = None
 
-    def _stream(self, name, cfg, split="train"):
+    def _stream(self, name, cfg=None, split="train"):
         from datasets import load_dataset
         return iter(load_dataset(name, cfg, split=split, streaming=True).shuffle(seed=self.rng.randint(0, 10**6), buffer_size=2000))
 
@@ -331,6 +331,8 @@ async def worker(client, model, task, rng, seeds, sem, idx):
             recs = [r for r in recs if not gen.has_bad_script({"s": r.state, "q": r.questions})]
             return recs, status
         except Exception as e:
+            if os.environ.get("SYNTH_DEBUG"):
+                import traceback; traceback.print_exc()
             return [], f"error:{type(e).__name__}"
 
 
