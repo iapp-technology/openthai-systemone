@@ -182,6 +182,24 @@ Thai sets and on NLI/topic tasks, and route low-confidence English yes/no decisi
 | v0.2 | 2026-09-21 | +3,000 SFT steps from v0.1 with a 22k-record synthetic Thai social-sentiment set (4/3/5-class, yes/no, score schemes), re-calibrated | **63.2** | 51.5 |
 | v0.1 | 2026-09-20 | initial release: Thai CPT 4.47B tokens, 12k-step SFT, calibration | 61.9 | 38.7 |
 
+## Changelog
+
+**v0.2 — 2026-09-21**
+- Continued fine-tuning for 3,000 steps from v0.1 with a new 22k-record synthetic Thai social-media sentiment set
+  (4-class with the "question" class, 3/5-class variants, yes/no flags, 5-level score), then re-calibrated.
+- Public 13-subset macro 61.9 → **63.2**; Wisesight 38.7 → **51.5**; MASSIVE-en 75.7 → 79.1; MASSIVE-th 86.4 → 88.6;
+  MultiNLI 85.6 → 87.3 (ECE 0.035 → 0.016); Aegis2 58.0 → 61.6; PubMedQA 53.6 → 56.4.
+- Regression: SIB-200 Thai 77.5 → 74.0 (sentiment set was weighted 4×; will be lowered next round). Unchanged: SQuAD2, SummEval-relevance.
+- Known issue (measured on v0.2): answers can depend on the *order* of the options, mildly for ≤ 10 options
+  (5–12% of arg-max choices flip under a random permutation, mean probability shift 0.05–0.14) and strongly for very
+  large option sets (77-way banking77: 72% flip). A permutation-averaging inference mode is in progress; until then, for
+  large option sets query with several option orders and average the probabilities.
+- Live API switched to v0.2 (same checkpoint as these weights).
+
+**v0.1 — 2026-09-20**
+- Initial release: Qwen3.5-0.8B text tower, 4.47B-token Thai CPT, 256-slot decision head, 12k-step SFT on 1.8M
+  public + 98k synthetic decision records, calibration stage. Public macro 61.9.
+
 ## License & credits
 
 Apache-2.0. Built by iApp Technology / OpenThai on Qwen3.5-0.8B-Base (Apache-2.0). Inspired by TypeSafe AI's
