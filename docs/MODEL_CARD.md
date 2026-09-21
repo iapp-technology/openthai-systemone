@@ -105,6 +105,41 @@ that route tickets or pick UI elements for an agent.
 Run it on your machine (iApp API key or the local weights, live HUD in Thai or English, optional recording):
 **https://github.com/iapp-technology/openthai-systemone-doom**
 
+## Thai showcase (real v0.3 outputs, 2026-09-22, via the API)
+
+Seven everyday Thai tasks, each answered in one forward pass; probabilities are the model's actual output.
+
+**1. Support ticket triage** — state: *"แอปโอนเงินไม่ได้ตั้งแต่เมื่อคืน ขึ้นว่า error 502 ตลอด ลองลงใหม่แล้วก็ยังไม่หาย รบกวนช่วยด่วนนะครับ ต้องโอนค่าเทอมลูกพรุ่งนี้"*
+
+| question | type | answer |
+|---|---|---|
+| ทีมใดควรรับผิดชอบ (billing / technical / sales / account) | choice | **technical 72%**, billing 27% |
+| ความเร่งด่วน (ไม่เร่งด่วน → วิกฤต) | score | **2.13 = เร่งด่วน** (85%), วิกฤต 14% |
+| ลูกค้าใช้ถ้อยคำสุภาพหรือไม่ | noul | 1% (the ticket is polite... see note) |
+
+**2. News topic** — *"ครม. เห็นชอบขึ้นค่าแรงขั้นต่ำเป็น 400 บาททั่วประเทศ มีผล 1 มกราคม สภาอุตสาหกรรมกังวลกระทบ SME"* (8 topics)
+→ choice **เศรษฐกิจ 62%**, แรงงาน 36%; noul "เกี่ยวกับแรงงานหรือไม่" → **98%**. Both readings are right; the probabilities show the overlap instead of hiding it.
+
+**3. Assistant intent** — *"ช่วยตั้งปลุกตอนหกโมงครึ่งพรุ่งนี้ให้หน่อย แล้วก็เปิดเพลงเบาๆ ตอนตื่นด้วย"* (10 intents)
+→ **alarm set 99.5%** (the secondary "play music" request does not distract the primary intent).
+
+**4. Comment moderation** — *"ไอ้พวกเหี้ย ทำงานกันแบบนี้ไปตายซะ ใครก็ได้เอาคนพวกนี้ออกไปที"*
+→ noul เป็นพิษ **94%**; choice sentiment **เชิงลบ 97%**.
+
+**5. Grounded QA (answerable or not)** — passage about สะพานพระราม 8 (opened 7 May 2545, 475 m long, Bangphlat ↔ Phra Nakhon)
+→ "สะพานยาวเท่าไร" answerable **98.5%**; "ระบุงบประมาณก่อสร้างหรือไม่" **0.6%**. It says *yes* only when the fact is actually in the text.
+
+**6. Agent tool selection** — task "จองโต๊ะร้านอาหาร 4 คน คืนนี้สองทุ่ม", 5 tools, history shows `search_restaurants` already found a free table
+→ next tool **make_reservation 96.5%** (not search again, not SMS yet).
+
+**7. RAG relevance + extraction** — question on withholding tax for building rent, passage stating 5%
+→ passage relevant **98%**; rate choice **5% (76%)**, 3% 16%.
+
+Latency from a laptop over the internet was 170–220 ms per request including network; the model itself takes ~40 ms on an H100.
+Note on example 1's politeness flag: the ticket uses "รบกวน…นะครับ", so the correct answer is *yes*; the model said no
+at 99%. Politeness judgement on formal Thai is a known gap and will get a targeted set in v0.4. We keep the miss here
+because a showcase that only shows hits is not useful.
+
 ## Evaluation
 
 All numbers are zero-shot: the model sees only the state, the instructions and the option names/descriptions.
