@@ -102,6 +102,7 @@ class Usage(BaseModel):
     input_tokens: int
     output_tokens: int = 0
     permutations: int = 1  # OpenThai extension: number of option orders averaged (order-invariant mode)
+    truncated: bool = False  # OpenThai extension: state was cut to max_state_tokens, the model did not see all of it
 
 
 class SystemOneRequest(BaseModel):

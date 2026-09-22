@@ -157,4 +157,8 @@ class SystemOneClient:
                     probabilities={str(i): float(pk[i]) for i in range(k)},
                     confidence=conf,
                 )
-        return SystemOneResponse(model=self.model_name, answers=answers, usage=Usage(input_tokens=enc.n_tokens, permutations=n_perm))
+        return SystemOneResponse(
+            model=self.model_name,
+            answers=answers,
+            usage=Usage(input_tokens=enc.n_tokens, permutations=n_perm, truncated=enc.truncated_state),
+        )

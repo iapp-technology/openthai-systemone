@@ -61,6 +61,17 @@ def test_batch_matches_single(model_dir):
             assert abs(s[k] - b[k]) < 1e-4
 
 
+def test_usage_reports_truncation(model_dir):
+    c = SystemOneClient(model_dir, device="cpu", max_state_tokens=32)
+    qs = {"q": Noul(instructions="ok?")}
+    short = c.system_one("hello", qs)
+    long = c.system_one("a long state that will not fit " * 20, qs)
+    assert short.usage.truncated is False
+    assert long.usage.truncated is True
+    assert long.usage.input_tokens < short.usage.input_tokens + 32
+    assert json.loads(long.model_dump_json())["usage"]["truncated"] is True
+
+
 def test_http_server(model_dir, monkeypatch):
     from fastapi.testclient import TestClient
 
